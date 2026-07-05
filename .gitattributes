@@ -1,0 +1,26 @@
+# Line-ending policy for this workshop.
+#
+# Every script here runs inside a LINUX Docker container via a bind mount
+# (`.:/workspace`), so the host checkout MUST use LF line endings on every
+# OS — including Windows. A single CRLF (\r) sneaking into a .sh file makes
+# bash read `set -euo pipefail\r` and abort with "invalid option name", and
+# CRLF in the Makefile or a shebang breaks them the same way.
+#
+# These rules override each attendee's local `git config core.autocrlf`
+# setting. Whatever their Windows/Mac/Linux Git is configured to do, files
+# come out of `git clone` with LF.
+
+# Default: let Git detect text vs binary, and force LF on checkout everywhere.
+* text=auto eol=lf
+
+# Be explicit for the files that actually break under CRLF (self-documenting).
+*.sh        text eol=lf
+*.py        text eol=lf
+Makefile    text eol=lf
+Dockerfile  text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+.gitignore  text eol=lf

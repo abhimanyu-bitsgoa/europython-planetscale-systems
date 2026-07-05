@@ -1,0 +1,16 @@
+services:
+  workshop:
+    build: .
+    # Run a tiny init (tini) as PID 1 so orphaned child processes get REAPED.
+    # The workshop spawns and kills many node subprocesses (the coordinator launches a
+    # leader + followers); when a parent is killed, its children reparent to PID 1. Our
+    # command below is `tail -f /dev/null`, which never calls wait(), so those children
+    # would accumulate as unreaped <defunct> "zombies" and eventually exhaust the PID
+    # table (fork()/exec start failing). `init: true` inserts an init that reaps them.
+    init: true
+    volumes:
+      # The workshop root is mounted at /workspace; `make` runs from there.
+      - .:/workspace
+    # No ports exposed to host to avoid conflicts with macOS services (AirPlay, etc.)
+    # Students interact with services entirely within the container shell.
+    command: tail -f /dev/null

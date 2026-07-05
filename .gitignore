@@ -1,0 +1,11 @@
+# Workshop working state
+kvstore/
+progress.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.DS_Store
