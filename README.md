@@ -16,9 +16,6 @@ once you've added the next feature. You run it (it fails), make one change, and 
 passes). For any stage you can also launch a **dashboard** (`make lab STAGE=NN`) — every process in
 its own pane plus a control pane to drive the system by hand.
 
-Curious *why* the system grows the way it does? [`docs/diffs/README.md`](docs/diffs/README.md)
-tells the whole build as one narrative arc — what each stage adds and the problem it solves.
-
 ## The ladder
 
 | # | Stage | You learn |
