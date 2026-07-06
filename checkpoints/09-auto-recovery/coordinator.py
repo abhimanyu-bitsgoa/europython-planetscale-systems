@@ -354,7 +354,9 @@ def write_data(request: WriteRequest):
         "version": result.get("version"),
         "sync_acks": sync_acks,
         "quorum": cluster.write_quorum,
-        "sync_replicated_to": sync_acked_by
+        "sync_replicated_to": [
+            next((f["node_id"] for f in sync_followers if f["url"] == u), u) for u in sync_acked_by
+        ]
     }
 
 @app.get("/read/{key}")
@@ -418,7 +420,8 @@ def read_data(key: str):
         "value": latest["value"],
         "version": latest["version"],
         "served_by": latest["node_id"],
-        "quorum_responses": len(results)
+        "quorum_responses": len(results),
+        "replicas": [{"node_id": r["node_id"], "version": r["version"]} for r in results],
     }
 
 @app.post("/spawn")
