@@ -45,7 +45,7 @@ make start     # seed your working copy from the first checkpoint
 Once you see that, you're ready.
 If anything looks off, reset and retry: `exit`, then `docker compose down && docker compose up -d`.
 
-Once you are done with the verification, kindly mark your completion [here](https://forms.gle/FXVLqQdhEEmSPBxc9). This will help me plan better.
+Once you are done with the verification, kindly mark your completion [here](https://forms.gle/ztp98S4u1tGK7dCC9). This will help me plan better.
 You are all set for the workshop. 
 Feeling excited? Take a look at the **[LAB-MANUAL.md](LAB-MANUAL.md)** to get a taste of what we'll be doing.
 
