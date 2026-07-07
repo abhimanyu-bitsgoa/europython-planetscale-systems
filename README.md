@@ -41,7 +41,7 @@ Inside the container shell:
 make verify    # ~15s preflight: checks the toolchain and boots a real node
 make start     # seed your working copy from the first checkpoint
 ```
-`make verify` should finish with every check passing and print **`SETUP VERIFIED`
+`make verify` should finish with every check passing and print **`SETUP VERIFIED`**.
 Once you see that, you're ready. A successful run looks like this:
 
 ![A successful `make verify` run — every check shows [OK] and the "SETUP VERIFIED" box appears](verify.png)
@@ -49,6 +49,8 @@ Once you see that, you're ready. A successful run looks like this:
 If anything looks off, reset and retry: `exit`, then `docker compose down && docker compose up -d`.
 
 Once you are done with the verification, kindly mark your completion [here](https://forms.gle/ztp98S4u1tGK7dCC9). This will help me plan better.
-You are all set for the workshop. 
+
+You are all set for the workshop.
+
 Feeling excited? Take a look at the **[LAB-MANUAL.md](LAB-MANUAL.md)** to get a taste of what we'll be doing.
 
