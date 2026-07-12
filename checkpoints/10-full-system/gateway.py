@@ -185,7 +185,7 @@ def cluster_status():
 GRADUATION_ART = """
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                                                                           ║
-║       🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓       ║
+║       🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓                    ║
 ║                                                                           ║
 ║      ██████╗ ██████╗  █████╗ ██████╗ ██╗   ██╗ █████╗ ████████╗███████╗   ║
 ║     ██╔════╝ ██╔══██╗██╔══██╗██╔══██╗██║   ██║██╔══██╗╚══██╔══╝██╔════╝   ║
@@ -194,20 +194,23 @@ GRADUATION_ART = """
 ║     ╚██████╔╝██║  ██║██║  ██║██████╔╝╚██████╔╝██║  ██║   ██║   ███████╗   ║
 ║      ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝   ║
 ║                                                                           ║
-║       🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓       ║
+║       🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓🎓                    ║
 ║                                                                           ║
 ╠═══════════════════════════════════════════════════════════════════════════╣
 ║                                                                           ║
-║     ★ CONGRATULATIONS! YOU ARE NOW A DISTRIBUTED SYSTEMS ENGINEER! ★     ║
+║     ★ CONGRATULATIONS! YOU ARE NOW A DISTRIBUTED SYSTEMS ENGINEER! ★      ║
 ║                                                                           ║
 ║     You have mastered:                                                    ║
 ║                                                                           ║
+║       ✅ Vertical Scaling                                                 ║
+║       ✅ Horizontal Scaling                                               ║
 ║       ✅ Load Balancing (Round-Robin & Adaptive)                          ║
 ║       ✅ Rate Limiting (Fixed Window Algorithm)                           ║
 ║       ✅ Single-Leader Replication                                        ║
 ║       ✅ Quorum Reads & Writes                                            ║
+║       ✅ CAP Theorem                                                      ║
 ║       ✅ Service Discovery & Heartbeats                                   ║
-║       ✅ Fault Tolerance & Recovery                                       ║
+║       ✅ Auto Recovery                                                    ║
 ║                                                                           ║
 ║     "In distributed systems, everything fails all the time.               ║
 ║      The difference is whether you designed for it."                      ║

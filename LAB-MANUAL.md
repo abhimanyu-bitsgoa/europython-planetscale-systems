@@ -21,7 +21,7 @@ Each stage adds one idea;  The four ✏️ stages ask you to write some code —
 | 07 | Quorum & CAP Theorem | Simple understanding of CAP Theroem | |
 | 08 | Service Discovery | How to detect a node outage | ✏️ |
 | 09 | Auto recovery | Get a node up & catchup | |
-| 10 | Full System | the whole thing behind a gateway | |
+| 10 | Full System | The whole thing behind a gateway | |
 
 ---
 
@@ -43,7 +43,8 @@ make checkpoint STAGE=NN   # any stage: loads the complete, working code (also y
 **2. Interactive way**
 
 ```bash
-make lab STAGE=NN
+make lab STAGE=NN          # This starts the interactive lab
+make lab-dowb              # Use this to exit the interactive shell
 ```
 
 One window, several panes: a **service pane** per process (nodes, or registry / coordinator /
@@ -52,9 +53,13 @@ own command list when it opens); an **incident pane** with the check pre-typed; 
 shell. Mouse mode is on — click a pane to focus, scroll to read history. Tear it down with
 `make lab-down`.
 
-**3. Check it.** In the **incident pane**, press **Enter** — it goes ❌ before the stage is solved and
-✅ after. (Prefer plain shells? After loading the stage, run `make up STAGE=NN` in one shell and
-`make incident STAGE=NN` in another.)
+**3. Incidents**
+
+The **incident pane**, is for checking whether the code exercises are working as expected.
+
+
+_If you don't prefer TMUX shells, run `make up STAGE=NN` in one shell and
+`make incident STAGE=NN` in another._
 
 _If you are attending this workshop in EuroPython 2026, the instructor will take you along these stages incrementally._
 
@@ -62,147 +67,182 @@ _If you are attending this workshop in EuroPython 2026, the instructor will take
 
 ## Stage 01 - Single Node
 
-A key-value store in its purest form: a Python `dict` behind two HTTP routes.
+Simplest key-value store: a Python `dict` behind HTTP.
 
-- **Run:** `make lab STAGE=01`
-- **Try (control pane):** `nwrite cart shoes` → `nread cart` (returns `shoes`)
-- **Check:** Enter in the incident pane → ✅ · **Rescue:** `make checkpoint STAGE=01`
+```bash
+make checkpoint STAGE=01
+make lab STAGE=01
+nwrite status pending   # Putting "pending" as the value for key "status"
+nread status            # Reading the value of key "status"
+make incident STAGE=01  # Just a simple check to see client-server are working
+```
 
 ## Stage 02 - Vertical Scaling
 
-One process can only do so much: Python runs your handler on a single thread (the GIL), so under
-concurrent load latency climbs. The fix is more worker processes.
+The load on your service resources (CPU, RAM, DISK etc) will rise as your users increase.
+The simplest thing will be to get a more powerful machine.
+Here for the lab, the `WORKERS` will denote the unicorn processes that are running the FAST API
+app. Each python process will have lock contention due to GIL.
+Getting more processes up so that the OS can schedule it on more cores is a loose example of how we are utilising the node more.
 
-- **Run:** `make lab STAGE=02` (a node with a CPU-load simulator, 4 workers)
-- **Check:** Enter in the incident pane → note the p95 with 4 workers (✅)
-- **Feel the ceiling:** `make lab-down`, then `WORKERS=1 make lab STAGE=02` → run the check again → latency spikes
-- **Try (control pane):** `nwrite` / `nread` / `nhealth` · **Rescue:** `make checkpoint STAGE=02`
+```bash
+make checkpoint STAGE=02
+make lab STAGE=02 WORKERS=1
+make incident STAGE=02
+```
+
+You may notice that the incident is active & mentioned that your p95 is too slow.
+Try running it with `WORKERS=4` to ease up the load on just 1 python process.
+
+```bash
+make lab STAGE=02 WORKERS=4
+make incident STAGE=02
+```
+
+You'll notice that the incident is resolved now as the p95 becomes better.
+
+_Note that depeneding upon your local machine configuration, the latency numbers might look different for you & even may not budge significantly. Instructor can take a look at your special cases after the workshop._
 
 ## Stage 03 - Horizontal Scaling & Load Balancing  ✏️
 
-One box is a single point of failure and a capacity wall, so go wide: three nodes, requests spread
-across them. But the cluster is *heterogeneous* — one weak node, two strong — and blind round-robin
-bombards the weak one, so the tail latency tanks. You'll route by capacity instead.
+Even a powerful node is still a single point of failure. Let's think about getting more nodes to support the increasing traffic.
 
-- **Load:** `make todo STAGE=03`  — exercise: `AdaptiveStrategy.get_node` in `kvstore/load_balancer.py`
-- **Run:** `make lab STAGE=03` (3 node panes: 1 weak, 2 strong)
-- **See it (control pane):**
+Since these nodes can be heterogeneous (different types, power etc) we should think more deeply about how we want to route our traffic. A blind round-robin might not always be a the best idea.
+
+_Exercise: Take a look at `AdaptiveStrategy.get_node` in `kvstore/load_balancer.py` & complete the function._
+
+```bash
+make todo STAGE=03        # Load the code skeleton to complete
+make checkpoint STAGE=03  # Load the complete code
+make lab STAGE=03         # Start the interactive lab
+```
+
+You can fire the below command from the  *control panel* compare how different load balancing strategies work for your case. Based on your machines, you may see varied results. Based on the repeated runs, you can ascertain the strategy you want to adopt for the service & traffic pattern.
+
   ```bash
-  nload round_robin 96 12   # blind 1/3 share lands on the weak node → bad global p95
-  nload adaptive   96 12    # errors until you write the one line below
-  nwrite a 1; nread a       # writes land on different nodes — data is SPLIT (motivates stage 05)
+  nload round_robin 96 12   # blind 1/3 share lands on the weak node
+  nload adaptive   96 12    # Tries to route to nodes that have the better chance of getting faster response
   ```
-- **Write the line:** return the node with the lowest load score (one line)
-- **Reload & check:** `make lab-down && make lab STAGE=03` → `nload adaptive 96 12` now beats round-robin → Enter in the incident pane → ✅
-- **Rescue:** `make checkpoint STAGE=03`
+
+You can even choose to run a comparison between round-robin & adaptive by using 'make incident STAGE=03`
 
 ## Stage 04 - Rate Limiting  ✏️
 
-Load balancing shares load; it doesn't *cap* it. A burst can still overwhelm a node. You'll implement
-a fixed-window limiter that sheds excess requests as `429`.
+Load balancing shares load; it doesn't *cap* it. A burst or a bad actor can still overwhelm a node. You'll implement a fixed-window limiter that sheds excess requests & returns `429` error code.
 
-- **Load:** `make todo STAGE=04`  — exercise: `FixedWindowStrategy.is_allowed` in `kvstore/rate_limiter.py`
-- **Run:** `make lab STAGE=04`
-- **See it (control pane):** flood the node past its limit — no `429`s until you implement the limiter
-- **Write the line:** reset the counter when the window rolls over, allow while under the limit, reject once it's hit
-- **Reload & check:** `make lab-down && make lab STAGE=04` → over-limit requests come back `429` → Enter in the incident pane → ✅
-- **Rescue:** `make checkpoint STAGE=04`
+_Exercise: Complete the function `FixedWindowStrategy.is_allowed` in `kvstore/rate_limiter.py`_
+
+```bash
+make todo STAGE=04        # Load the code skeleton to complete
+make checkpoint STAGE=04  # Load the complete code
+make lab STAGE=04         # Start the interactive lab
+make incident STAGE=04    # You'll see the requests getting rate limited
+```
 
 ## Stage 05 - Replication  ✏️
 
-Now a real cluster: one **leader** plus **followers**, coordinated by a `coordinator`. Reads are
-served from the followers, so a write that never reaches them is stranded.
+Let's thing about Stateful systems now. How do we scale them?
+Consider a **1 leader** & **3 followers**, coordinated by a `coordinator`. In this design the WRITES are sent to the Coordinator & then the Leader while the READS are sent to Coordinator & the Followers. The Leader is not in the READ path. This is just for simplicity.
 
-- **Load:** `make todo STAGE=05`  — exercise: `replicate_to_follower` in `kvstore/node.py`
-- **Run:** `make lab STAGE=05` (coordinator pane spawns leader + 3 followers)
-- **See it (control pane):** `kvwrite order paid` → `kvstatus` → `kvread order` (misses — stranded on the leader)
-- **Write the line:** `POST` the write to the follower's `/replicate` route; return success on `200`
-- **Reload & check:** `make lab-down && make lab STAGE=05` → `kvread order` hits → Enter in the incident pane → ✅
-- **Watch the twist — stale reads** (weak quorum `W=1, R=1`):
-  ```bash
-  kvwrite order paid       # write v1 — wait ~5s so every follower (even the async one) has it
-  kvwrite order shipped    # UPDATE to v2 — the sync follower gets it fast, the async one lags
-  kvread order             # immediately → "paid" (stale!); again after ~5s → "shipped"
-  ```
-  That fleeting wrong answer is exactly what stage 06 removes. **Rescue:** `make checkpoint STAGE=05`
+_Exercise: Take a look at `replicate_to_follower(...)` in `kvstore/node.py` & complete the function._ 
+
+```bash
+make todo STAGE=05        # Load the code skeleton to complete
+make checkpoint STAGE=05  # Load the complete code
+make lab STAGE=05         # Start the interactive lab
+make incident STAGE=05    # Check if your changes are working fine.
+```
+
+Let's simulate an interesting case in this cluster. Let's try reading a key a key quickly right after we write it & see if it return the latest value.
+
+```bash
+kvwrite order pending     # Setting the value of key "order" to "pending"
+kvwrite order done        # Changing the value of "order" to "done"
+kvread order              # If you read fast enough, you'll see a Stale value
+```
+Please note that for simplicity our cluster reads are happening via pre determined nodes, in the real world, we'll like to send an ACK to arbitrary number of nodes & wait for the number of ACKs we care about.
 
 ## Stage 06- Synchronous Replication
 
 You just watched a stale read: at `W=1, R=1` the read lands on an async follower that hasn't caught
-up. Turn the knob the other way — make **every** follower synchronous (`W = N`), so a write reaches
+up. Turn the knob the other way  make **every** follower synchronous (`W = N`), so a write reaches
 all of them before it returns. No follower can lag, so no read is stale.
 
-- **Run:** `make lab STAGE=06` (all-sync `W=3, R=1`)
-- **See it fresh (control pane):** `kvwrite order paid` → `kvread order` (always the latest) → `kvstatus`
-- **Check:** Enter in the incident pane → ✅
-- **The over-correction:** a write now needs *every* follower alive —
-  ```bash
-  kvkill 1                 # take down a follower
-  kvwrite order delivered  # → 503: the write can't reach all N followers anymore
-  ```
-  Zero fault tolerance — the price of strong consistency. Stage 07 finds the middle ground.
-- **Rescue:** `make checkpoint STAGE=06`
+```bash
+make checkpoint STAGE=06
+make lab STAGE=06
+kvwrite order paid
+kvread order
+```
+
+Let's try to remove a node from the cluster & see if we can still WRITE or READ.
+
+```bash
+kvkill 1
+kvwrite order delivered
+kvread order
+```
+Although we can still READ but WRITE is blocked. This is expected as we wanted 3 followers (excluding leader) to return an ACK for every write.
+Seems like our cluster can't even tolerate the downtime of 1 follower.
+So even though the data will remain consistent but the price we pay is availability & system is not fault tolerant.
 
 ## Stage 07 - Quorum & CAP Theorem
 
 All-sync gives fresh reads but tolerates **zero** failures. The sweet spot is a **majority quorum**
-(`W=2, R=2` with `N=3`): it survives one follower failure *and* keeps `W + R > N`, so reads stay
-fresh. When the quorum is lost, the system refuses writes to preserve consistency — the CAP choice,
-made visible.
+(`W=2, R=2` with `N=3`): it survives 1 follower failure & reads are still fresh. When the quorum is lost, the system refuses writes to preserve consistency.
 
-- **Run:** `make lab STAGE=07` (majority quorum `W=2, R=2`)
-- **See it (control pane):**
-  ```bash
-  kvwrite order paid
-  kvkill 1                 # planned removal — kvkill goes THROUGH the coordinator, so it knows
-  kvstatus                 # one dead, but the quorum holds
-  kvwrite order shipped    # still works
-  kvread order             # still fresh
-  ```
-- **Check:** Enter in the incident pane → ✅ · **Rescue:** `make checkpoint STAGE=07`
+```bash
+make checkpoint STAGE=07
+make lab STAGE=07
+kvwrite order paid
+kvkill 1
+kvwrite order shipped       # WRITE goes through as WRITE quorum is not lost
+kvread order                # READ goes through as READ quorum is not lost
+```
 
-> **Notice:** the coordinator coped because *you told it* — `kvkill` is an administrative removal that
-> runs through the coordinator's API. It isn't *detecting* anything. So what happens when a node just
-> **crashes**, with nobody told? That gap is what stage 08 fixes.
+> `kvkill` is like a planned removal of node from the cluster. So the coordinator is aware about the node being down (As we asked it to remove it!). What happens when the nodes, just dies?
 
 ## Stage 08 - Service Discovery  ✏️
 
-Real nodes **crash** — unannounced, telling no one. The coordinator has no health monitor, so a crash
-is invisible: it keeps routing to a corpse. The fix is a **registry** that tracks liveness via
-**heartbeats** — nodes announce "I'm alive" on an interval, and when the beats stop the registry
-notices. You'll implement the heartbeat each node sends.
+Real nodes could **crash** abruptly, telling no one. The coordinator has no health monitor, so a crash
+is invisible & it keeps routing to a dead node. We can fix this by asking the nodes to send a **heartbeat** periodically to a central **registry** service.
 
-- **Load:** `make todo STAGE=08`  — exercise: `heartbeat_loop` in `kvstore/node.py`
-- **Run:** `make lab STAGE=08` (registry + coordinator panes)
-- **See it go blind (control pane):** `kvcrash` kills the node *directly*, without telling the coordinator —
-  ```bash
-  kvwrite order paid
-  kvcrash 1                # the node dies; the coordinator is NOT told
-  kvstatus                 # follower-1 still shows "alive" — the coordinator has no idea
-  ```
-- **Write the line:** `POST` the node's identity (`node_id`, `port`, `url`, `role`) to the registry's `/heartbeat` route each interval
-- **Reload & check:** `make lab-down && make lab STAGE=08`, then `kvwrite order paid`, `kvcrash 1`, wait past the timeout (~5s), `kvstatus` → follower-1 flips to **dead** → Enter in the incident pane → ✅
-- **Rescue:** `make checkpoint STAGE=08`
+```bash
+make todo STAGE=08
+make lab STAGE=08
+kvwrite order paid
+kvcrash 1                   # Crashing the Follower 1
+kvread order shipped        # The Coordinator is not receiving write ACK anymore
+kvstatus                    # Notice that Coordinator feels all the nodes are ALIVE
+```
+_Exercise: Take a look at `heartbeat_loop(...)` in `kvstore/node.py` & complete the function._
+
+```bash
+make checkpoint STAGE=08
+make lab STAGE=08
+kvwrite order paid
+kvcrash 1                   # Crashing the Follower 1
+kvread order shipped        # The Coordinator understands that a nodes is down
+kvstatus                    # Coordinator knows about a dead node.
+```
+_Please note that in real systems, the Coordinator would have sent the WRITE to all the followers & would have been fine as long as it receives 2 ACKS here.
+However, for the sake of simplicity, we are expecting ACKs from specific nodes only._
 
 ## Stage 09 - Auto Recovery
 
-Detecting death just gives you an accurate map of the damage; the cluster still runs degraded. With
-auto-spawn, a follower that stops heartbeating is **respawned**, and the coordinator **catches it up**
-from the leader's snapshot.
+The next step of detecing a node outage is mitigation. The Cluster shall spin up a new node & catch it up with all the data that other nodes & the leader has.
 
-- **Run:** `make lab STAGE=09` (auto-spawn enabled)
-- **Watch it heal (control pane):**
-  ```bash
-  kvwrite order paid
-  kvcrash 1                # unannounced crash — the registry detects the missed heartbeats
-  kvstatus                 # degraded...
-  # wait ~10s — the registry auto-spawns a replacement; the coordinator pane shows the catch-up
-  kvstatus                 # back to full strength
-  kvread order             # the revived node has the data
-  ```
-- **Check:** Enter in the incident pane → ✅ · **Rescue:** `make checkpoint STAGE=09`
+```bash
+make checkpoint STAGE=09
+make lab STAGE=09
+kvwrite order paid
+kvcrash 1                   # Crashing the Follower 1
 
-This is the cluster healing itself — the high point of what you build by hand.
+# Wait ~10s — the registry auto-spawns a replacement; the coordinator pane shows the catch-up
+
+kvstatus                    # Cluster auto heals & has the data
+kvread order                # The revived node has the data
+```
 
 ## Stage 10 - Full System
 
@@ -212,8 +252,8 @@ check — it's the synthesis of stages 01–09, and the way to experience it is 
 - **Run:** `make lab STAGE=10` (registry + coordinator + gateway panes)
 - **Take it for a spin (control pane):**
   ```bash
-  kvwrite cart shoes       # trace it: gateway (:8000) → coordinator (:7000) → leader → followers
-  kvread cart
+  kvwrite order pending       # trace it: gateway (:8000) → coordinator (:7000) → leader → followers
+  kvread order
   kvflood 15               # hammer the edge — the rate limiter sheds the overflow as 429s
   kvwrite order paid
   kvcrash 1                # unannounced crash — quorum holds, then it auto-respawns and catches up
@@ -221,6 +261,7 @@ check — it's the synthesis of stages 01–09, and the way to experience it is 
   ```
 - Tear it down with `make lab-down`.
 
+> Easter Egg:  Run `curl -s http://localhost:8000/graduate` from the free shell in Lab 10
 ---
 
 ## Cheat sheet
