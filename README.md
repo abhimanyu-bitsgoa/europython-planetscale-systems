@@ -13,6 +13,8 @@ In this tutorial, we will have several hands on exercises to dive deeper into th
 
 Towards the end of the tutorial, you'll have a clear mental model of some of the most confusing concepts in distributed systems. The ultimate goal is to give you enough knowledge, curiosity & tooling so that you can explore this field on your own & be confident about building the next planet scale system.
 
+> [Slides for EuroPython 2026 attendees](https://docs.google.com/presentation/d/14Tkp1xqWCdtA6k85vBffnA8CZS-zmKkN4dFP0-sI1-g/edit?usp=sharing)
+
 ## Quick setup
 
 > **Do this once, on a good internet connection, _before_ the workshop.** The first build downloads

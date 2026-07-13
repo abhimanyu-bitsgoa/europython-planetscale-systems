@@ -1,10 +1,13 @@
 # Lab Manual
 
+> [Slides for EuroPython 2026 attendees](https://docs.google.com/presentation/d/14Tkp1xqWCdtA6k85vBffnA8CZS-zmKkN4dFP0-sI1-g/edit?usp=sharing)
+
 You'll build a distributed key-value store from a single Python `dict` behind HTTP into a
 fault-tolerant cluster, one stage at a time. Every stage gives you a live dashboard to
 poke the system by hand and watch it react.
 
 This is the follow-along spec for the workshop.
+
 
 ## The ladder
 
